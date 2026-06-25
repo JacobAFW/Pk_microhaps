@@ -1,0 +1,49 @@
+# Quarto book project — Pk microhap discovery pipeline progress report.
+#
+# Renders after each stage completes (see workflow/rules/99_report.smk).
+# Chapters are appended in stage order as the pipeline grows.
+#
+# Output: reports/_book/index.html (multi-page HTML site, sidebar navigation).
+# Project root for code execution is this directory, so chapter code cells
+# read outputs with project-root-relative paths (outputs/qc/..., reports/figures/..., etc).
+
+project:
+  type: book
+  output-dir: reports/_book
+  execute-dir: project
+
+book:
+  title: "P. knowlesi microhap discovery — pipeline report"
+  subtitle: "Menzies School of Health Research · Pop-gen → microhap port"
+  author: "Jacob Westaway"
+  date: today
+  search: true
+  sidebar:
+    style: docked
+    collapse-level: 2
+  chapters:
+    - index.qmd
+    - part: "Pipeline stages"
+      chapters:
+        - reports/qmd/01_data_prep.qmd
+        - reports/qmd/02_sample_qc.qmd
+        - reports/qmd/03_snp_qc.qmd
+
+format:
+  html:
+    theme: cosmo
+    toc: true
+    toc-depth: 3
+    code-fold: true
+    code-tools: true
+    code-overflow: wrap
+    embed-resources: false   # multi-page book; set true on a single-file render later
+    fig-width: 7
+    fig-height: 4.5
+    df-print: paged
+    callout-appearance: simple
+
+execute:
+  echo: true
+  warning: false
+  freeze: auto   # cache renders; only re-execute when source changes

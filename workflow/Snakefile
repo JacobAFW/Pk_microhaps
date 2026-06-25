@@ -1,0 +1,74 @@
+# Snakefile — Pk microhaplotype panel discovery pipeline
+#
+# Top-level workflow. All parameters and paths in workflow/config.yaml.
+# Each stage lives in its own .smk file under workflow/rules/, with a sibling
+# .README.md explaining purpose, rules, parameters, and exit criterion.
+#
+# Stages (mapping to Siegel et al 2024 Nat Commun):
+#   01_data_prep  — stage inputs + build Pk core+coding BED (all)
+#   02_sample_qc  — monoclonal filter (NB1 phase 1)
+#   03_snp_qc     — biallelic + MAF + miss + core-coding (NB1 phase 2)
+#   04_window_scan — sliding 200bp scan → Pk heterozygome (NB1 phase 3) [TODO]
+#   05_panel_select — greedy + evenly-spaced selection (NB2)            [TODO]
+#   06_validate   — paneljudge + hmmIBD + PCoA (NB2 + Methods)          [TODO]
+#   99_report     — Quarto book (grows per stage; rendered after each)
+#
+# v1 acceptance: candidate Pk 100-microhap panel + paneljudge IBD-RMSE plot
+# replicating Siegel's headline result (RMSE < 0.1 at r=0.5) on Pk WGS.
+
+configfile: "workflow/config.yaml"
+
+# ---------------------------------------------------------------------------
+# Convenience handles
+# ---------------------------------------------------------------------------
+VCF        = config["vcf"]["path"]
+VCF_INDEX  = config["vcf"]["index"]
+REF_FASTA  = config["reference"]["fasta"]
+REF_GFF    = config["reference"]["gff"]
+MASK_LIST  = config["reference"]["mask_list"]
+
+SETUP_DIR  = config["outputs"]["setup_dir"]
+QC_DIR     = config["outputs"]["qc_dir"]
+SCAN_DIR   = config["outputs"]["scan_dir"]
+PANEL_DIR  = config["outputs"]["panel_dir"]
+VAL_DIR    = config["outputs"]["validation_dir"]
+FIG_DIR    = config["outputs"]["figures_dir"]
+LOGS_DIR   = config["outputs"]["logs_dir"]
+
+# ---------------------------------------------------------------------------
+# Stage includes — add lines as stages are written
+# ---------------------------------------------------------------------------
+include: "rules/01_data_prep.smk"
+include: "rules/02_sample_qc.smk"
+include: "rules/03_snp_qc.smk"
+# include: "rules/04_window_scan.smk"
+# include: "rules/05_panel_select.smk"
+# include: "rules/06_validate.smk"
+include: "rules/99_report.smk"
+
+# ---------------------------------------------------------------------------
+# Final targets — extend as later stages are added.
+# ---------------------------------------------------------------------------
+FINAL_TARGETS = [
+    # Stage 01
+    f"{SETUP_DIR}/inputs_check.ok",
+    "data/reference/pk_core_coding.bed",
+    f"{SETUP_DIR}/fws_from_popgen.tsv",
+    # Stage 02
+    "data/metadata/samples.tsv",
+    f"{QC_DIR}/sample_metadata.tsv",
+    f"{QC_DIR}/discovery_samples.txt",
+    f"{FIG_DIR}/fws_distribution.png",
+    f"{FIG_DIR}/callable_fraction_distribution.png",
+    # Stage 03
+    f"{QC_DIR}/snps.discovery.vcf.gz",
+    f"{QC_DIR}/snps.summary.tsv",
+    f"{FIG_DIR}/snp_qc_maf_density.png",
+    f"{FIG_DIR}/snp_qc_missingness_density.png",
+    # Quarto book — rebuilt after each stage adds new outputs
+    "reports/_book/index.html",
+]
+
+rule all:
+    input: FINAL_TARGETS
+    message: "Pipeline complete — see outputs/ and reports/."

@@ -1,0 +1,92 @@
+# config.yaml — all parameters and paths for the Pk microhap discovery pipeline.
+# Override individual values with: snakemake --config key=value
+
+# ---------------------------------------------------------------------------
+# Inputs (populated by envs/install.sh; symlinked from Pop-gen by default)
+# ---------------------------------------------------------------------------
+vcf:
+  # Discovery cohort VCF. 990-sample Indonesia + Malaysia merged Pk WGS.
+  path: data/vcf/merged_popgen.vcf.gz
+  # Tabix/CSI index — required for region queries.
+  index: data/vcf/merged_popgen.vcf.gz.csi
+
+reference:
+  # PlasmoDB-67 PknowlesiA1H1 fasta (matches Pop-gen).
+  fasta: data/reference/PlasmoDB-67_PknowlesiA1H1_Genome.fasta
+  # PlasmoDB-68 GFF for coding-region annotation.
+  gff: data/reference/PlasmoDB-68_PknowlesiA1H1.gff
+  # Region exclusion list from Pop-gen (309 problematic regions, colon-dash format).
+  mask_list: data/reference/regions_to_mask.list
+
+# Pre-computed Fws table from Pop-gen Stage 2. Used by 02_sample_qc.smk to
+# identify likely-monoclonal samples (Siegel framework requires Fws ≥ 0.95).
+# The path is relative to POPGEN_PIPELINE_PATH if set, or the default sibling
+# location. Stage 02 will assert the file exists; if not, falls back to
+# computing Fws in-project via moimix.
+popgen:
+  fws_table: outputs/setup/fws_from_popgen.tsv  # populated by 01_data_prep
+
+# ---------------------------------------------------------------------------
+# Stage 02 — sample QC (Siegel notebook 1, phase 1)
+# ---------------------------------------------------------------------------
+sample_qc:
+  fws_threshold: 0.95            # monoclonal proxy
+  callable_threshold: 0.50       # ≥50% core genome callable
+
+# ---------------------------------------------------------------------------
+# Stage 03 — SNP QC (Siegel notebook 1, phase 2)
+# ---------------------------------------------------------------------------
+snp_qc:
+  maf_min: 0.10                  # global MAF floor
+  missingness_max: 0.10          # per-SNP genotype failure rate
+  require_pass: true             # FILTER == PASS only
+  biallelic_only: true
+  restrict_to_core_coding: true  # uses 01_data_prep's pk_core_coding.bed
+
+# ---------------------------------------------------------------------------
+# Stage 04 — window scan (Siegel notebook 1, phase 3)
+# ---------------------------------------------------------------------------
+window_scan:
+  size_bp: 200                   # max Illumina amplicon size
+  step_bp: 50                    # 75% overlap
+  min_snps: 3                    # ≥3 SNPs per candidate window
+  min_heterozygosity: 0.50       # window He floor (above max for biallelic SNP)
+
+# ---------------------------------------------------------------------------
+# Stage 05 — panel selection (Siegel notebook 2)
+# ---------------------------------------------------------------------------
+panel_select:
+  snp_min_per_window: 3          # tighter than scan for selection
+  snp_max_per_window: 10         # diminishing returns above 10; 2^10 = 1024 combos
+  heterozygosity_min: 0.60       # higher floor for selection
+  panel_sizes: [50, 100, 150, 200, 250]
+  algorithms: [greedy, evenly_spaced]
+  default_panel_size: 100        # the v1 deliverable
+
+# ---------------------------------------------------------------------------
+# Stage 06 — validation (Siegel notebook 2 + paper Methods)
+# ---------------------------------------------------------------------------
+validation:
+  paneljudge:
+    r_grid: [0.0, 0.25, 0.5, 0.75, 1.0]
+    n_simulations: 100           # haploid genotype pairs per r
+    crossover_rate_per_bp: 7.4e-7  # paneljudge default (Taylor et al)
+  hmmibd:
+    version: "3.0"
+    run_as_biallelic: true       # v3 limitation per Siegel methods
+  ibd_thresholds:                # for classification reporting
+    clone: 0.95
+    close_relative: 0.25
+    distant_relative: 0.05
+
+# ---------------------------------------------------------------------------
+# Output layout
+# ---------------------------------------------------------------------------
+outputs:
+  setup_dir: outputs/setup
+  qc_dir: outputs/qc
+  scan_dir: outputs/scan
+  panel_dir: outputs/panel
+  validation_dir: outputs/validation
+  figures_dir: reports/figures
+  logs_dir: logs
