@@ -116,6 +116,17 @@ panel_select:
   panel_sizes: [50, 100, 150, 200, 250]
   algorithms: [greedy, evenly_spaced]
   default_panel_size: 100        # the v1 deliverable
+  # Minimum distance between selected markers. Load-bearing, not cosmetic:
+  # Stage 04 windows are 200 bp at a 50 bp step, so neighbouring candidates
+  # overlap by up to 75% and describe the same piece of genome. On the Stage 04
+  # output, 19,674 selection-eligible windows collapse to 5,915 independent
+  # loci. Without this, a panel could spend several markers on one locus and
+  # report them as independent. 10 kb is a starting value, not a locked
+  # decision — it has never been run.
+  min_spacing_bp: 10000
+  # Output versioning, same convention as window_scan. Bump for a re-run; the
+  # script refuses to start if its outputs already exist.
+  version_tag: v1_2026-09-25
 
 # ---------------------------------------------------------------------------
 # Stage 06 — validation (Siegel notebook 2 + paper Methods)

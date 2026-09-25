@@ -10,7 +10,7 @@
 #   02b_declonalise — replicate removal + IBD + clonal thinning (Siegel crit. 3)
 #   03_snp_qc     — biallelic + MAF + miss + core-coding (NB1 phase 2)
 #   04_window_scan — sliding 200bp scan → Pk heterozygome (NB1 phase 3)
-#   05_panel_select — greedy + evenly-spaced selection (NB2)            [TODO]
+#   05_panel_select — greedy + evenly-spaced selection (NB2)  [SCAFFOLDED, NOT RUN]
 #   06_validate   — paneljudge + hmmIBD + PCoA (NB2 + Methods)          [TODO]
 #   99_report     — Quarto book (grows per stage; rendered after each)
 #
@@ -45,7 +45,8 @@ include: "rules/02_sample_qc.smk"
 include: "rules/02b_declonalise.smk"
 include: "rules/03_snp_qc.smk"
 include: "rules/04_window_scan.smk"
-# include: "rules/05_panel_select.smk"
+include: "rules/05_panel_select.smk"   # scaffolded, not run; no Stage 05 output
+                                       # is in FINAL_TARGETS on purpose
 # include: "rules/06_validate.smk"
 include: "rules/99_report.smk"
 
