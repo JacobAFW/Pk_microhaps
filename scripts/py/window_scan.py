@@ -95,6 +95,11 @@ def parse_args():
     p.add_argument("--min-snps", type=int, required=True)
     p.add_argument("--min-het", type=float, required=True)
     p.add_argument("--seed", type=int, required=True, help="haploidify seed (L2)")
+    p.add_argument("--missing-policy", required=True,
+                   help="L1. Only 'both' is implemented — het_raw and het_nomiss are "
+                        "always both emitted and the heterozygome is always filtered "
+                        "on het_raw. Asserted, not branched on: a value other than "
+                        "'both' is a config error, not a silent fallback.")
     p.add_argument("--out-windows", required=True)
     p.add_argument("--out-heterozygome", required=True)
     p.add_argument("--out-summary", required=True)
@@ -280,6 +285,11 @@ def scan_chromosome(chrom, pos, gt, cov, size, step):
 def main():
     args = parse_args()
     _self_test_dedupe()
+    if args.missing_policy != "both":
+        sys.exit(f"ERROR: --missing-policy={args.missing_policy!r} is not implemented. "
+                 "L1 fixes this to 'both' (emit het_raw and het_nomiss, filter on "
+                 "het_raw). Change the lock in handoffs/04_window_scan.md before "
+                 "changing the config key.")
     refuse_to_overwrite([args.out_windows, args.out_heterozygome, args.out_summary])
 
     print(f"==> window_scan: size={args.window_size} step={args.step} "
@@ -360,7 +370,7 @@ def main():
                  ("bed", args.bed), ("n_samples", n_samples),
                  ("window_size_bp", args.window_size), ("step_bp", args.step),
                  ("min_snps", args.min_snps), ("min_heterozygosity", args.min_het),
-                 ("haploidify_seed", args.seed), ("missing_policy", "both"),
+                 ("haploidify_seed", args.seed), ("missing_policy", args.missing_policy),
                  ("scikit_allel_version", allel.__version__)):
         summary.append(("params", k, str(v)))
     for k, v in (("variants_read", len(pos_all)),

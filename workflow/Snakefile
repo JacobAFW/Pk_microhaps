@@ -26,6 +26,7 @@ VCF        = config["vcf"]["path"]
 VCF_INDEX  = config["vcf"]["index"]
 REF_FASTA  = config["reference"]["fasta"]
 REF_GFF    = config["reference"]["gff"]
+REF_GFF_LIFTED = config["reference"]["gff_lifted"]
 MASK_LIST  = config["reference"]["mask_list"]
 
 SETUP_DIR  = config["outputs"]["setup_dir"]
@@ -78,6 +79,8 @@ FINAL_TARGETS = [
     f"{SCAN_OUT}/windows_all.tsv.gz",
     f"{SCAN_OUT}/heterozygome.tsv",
     f"{SCAN_OUT}/window_scan_summary.tsv",
+    f"{SCAN_OUT}/candidate_genes_top20.tsv",
+    f"{SCAN_OUT}/candidate_window_genes.tsv",
     *expand(f"{SCAN_FIG_DIR}/{{fig}}.{{ext}}",
             fig=WINDOW_SCAN_FIGURES, ext=["pdf", "png"]),
     # Quarto book — rebuilt after each stage adds new outputs

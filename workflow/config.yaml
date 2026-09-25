@@ -15,6 +15,12 @@ reference:
   fasta: data/reference/PlasmoDB-67_PknowlesiA1H1_Genome.fasta
   # PlasmoDB-68 GFF for coding-region annotation.
   gff: data/reference/PlasmoDB-68_PknowlesiA1H1.gff
+  # The same annotation lifted onto strain_A1 (ordered_PKNH_*_v2) coordinates by
+  # HANDOFF #02's liftoff run — i.e. the only GFF whose contig names match the
+  # VCF. Built out-of-band, not by a rule, so it is an external input like the
+  # mask list. Used for gene-level annotation of candidate windows (Stage 04)
+  # and by scripts/py/audit_core_coding_bed.py.
+  gff_lifted: data/reference/pk_annotation.lifted.gff
   # Region exclusion list from Pop-gen (309 problematic regions, colon-dash format).
   mask_list: data/reference/regions_to_mask.list
 

@@ -65,6 +65,7 @@ rule window_scan:
         min_snps = config["window_scan"]["min_snps"],
         min_het = config["window_scan"]["min_heterozygosity"],
         seed    = config["window_scan"]["seed"],
+        missing_policy = config["window_scan"]["missing_policy"],
     threads: 1
     log:
         f"{LOGS_DIR}/04_window_scan/window_scan.log",
@@ -84,9 +85,46 @@ rule window_scan:
             --min-snps {params.min_snps} \
             --min-het {params.min_het} \
             --seed {params.seed} \
+            --missing-policy {params.missing_policy} \
             --out-windows {output.windows} \
             --out-heterozygome {output.heterozygome} \
             --out-summary {output.summary} \
+            2>&1 | tee {log}
+        """
+
+# ---------------------------------------------------------------------------
+# rule annotate_candidate_windows
+#
+# Which genes do the candidate windows sit in? The handoff requires the top-20
+# genes by candidate-window count, and the narrowed spatial-clustering diagnostic
+# needs the gene-family composition of the top-He windows — the SICAvar / kir
+# question is closed (deviation B1), so if the excess windows cluster, the job is
+# to name where. Read-only on the GFF; no filter is applied to the heterozygome.
+# ---------------------------------------------------------------------------
+rule annotate_candidate_windows:
+    input:
+        heterozygome = f"{SCAN_OUT}/heterozygome.tsv",
+        gff          = REF_GFF_LIFTED,
+    output:
+        top     = f"{SCAN_OUT}/candidate_genes_top20.tsv",
+        windows = f"{SCAN_OUT}/candidate_window_genes.tsv",
+    params:
+        top_n = 20,
+    threads: 1
+    log:
+        f"{LOGS_DIR}/04_window_scan/annotate_candidate_windows.log",
+    message:
+        "04_window_scan: candidate windows → genes (top 20 by window count)"
+    shell:
+        r"""
+        set -euo pipefail
+        mkdir -p $(dirname {output.top}) $(dirname {log})
+        python scripts/py/annotate_candidate_windows.py \
+            --heterozygome {input.heterozygome} \
+            --gff {input.gff} \
+            --top-n {params.top_n} \
+            --out-top {output.top} \
+            --out-windows {output.windows} \
             2>&1 | tee {log}
         """
 
