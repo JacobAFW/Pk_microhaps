@@ -86,6 +86,19 @@ window_scan:
   step_bp: 50                    # 75% overlap
   min_snps: 3                    # ≥3 SNPs per candidate window
   min_heterozygosity: 0.50       # window He floor (above max for biallelic SNP)
+  seed: 250523                   # L2 — Siegel's haploidify seed, so any
+                                 # comparison to the paper is exact. Applied to
+                                 # the het_nomiss branch ONLY; het_raw is
+                                 # computed on un-haploidified diploid columns.
+  missing_policy: both           # L1 — emit het_raw (Siegel-faithful) AND
+                                 # het_nomiss; filter the heterozygome on
+                                 # het_raw only. Recorded in the summary.
+  # Output versioning. Results land in outputs/scan/<version_tag>/ and figures in
+  # reports/figures/<figures_subdir>/. Bump version_tag for a re-run — the scan
+  # script refuses to start if its outputs already exist, so nothing is
+  # overwritten and old versions stay where they are.
+  version_tag: v1_2026-09-25
+  figures_subdir: 04_window_scan
 
 # ---------------------------------------------------------------------------
 # Stage 05 — panel selection (Siegel notebook 2)
