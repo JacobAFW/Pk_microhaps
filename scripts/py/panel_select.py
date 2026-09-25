@@ -156,9 +156,15 @@ def allocate_by_length(lengths, chroms, panel_size):
 
 
 def pick_greedy(cand, n, min_spacing):
-    """Highest het_raw first; skip anything within `min_spacing` of a pick."""
+    """Highest het_raw first; skip anything within `min_spacing` of a pick.
+
+    NOTE the column is `n_snps`, not `n_variants` — `main()` renames Stage 04's
+    `n_variants` before selection runs. Sorting on the old name raised KeyError
+    on every greedy call, including the v1 deliverable; caught at review by
+    executing the function, which lint and `snakemake -n` cannot do.
+    """
     chosen = []
-    for r in cand.sort_values(["het_raw", "n_variants"],
+    for r in cand.sort_values(["het_raw", "n_snps"],
                               ascending=[False, False]).itertuples():
         if len(chosen) >= n:
             break

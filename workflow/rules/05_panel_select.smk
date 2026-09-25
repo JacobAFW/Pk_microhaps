@@ -20,8 +20,14 @@
 #   data/reference/strain_preDB_version/...Icor.fasta.fai    (contig lengths)
 #
 # Outputs (version-tagged; nothing existing is overwritten):
-#   outputs/panel/<tag>/candidates.tsv
+#   outputs/panel/<tag>/candidates.{algorithm}_{size}.tsv
 #   outputs/panel/<tag>/panel_{algorithm}_{size}.tsv
+#
+# The candidates table is per-job rather than shared. All 10 jobs would otherwise
+# write the same ~5,900-row file concurrently, which is a write race; the cost is
+# 10 identical copies, which is cheap and safe. If that becomes annoying, make it
+# its own rule that the panel rules depend on — do NOT make it a shared output of
+# this one.
 #
 # The v1 deliverable is `panel_greedy_100.tsv`.
 

@@ -101,9 +101,11 @@ python runs/2026-09-25_stage04-window-scan/phase03_structure.py
 # -> within_cluster_maf.tsv, pct_monomorphic column
 ```
 
-(The 17.17% is printed to stdout and reported in `phase_03_report.md`; it is
-derived from `outputs/scan/v1_2026-09-25/diagnostics/within_cluster_maf.tsv` and
-`structure_attribution.tsv` rather than stored as a field of its own.)
+⚠ **Provenance:** the 17.17% (8,801 SNPs) is the **three-way intersection**, and
+it exists only in `phase03_structure.py`'s stdout and in `phase_03_report.md`.
+It is **not** recoverable from the TSVs — `within_cluster_maf.tsv` holds
+per-cluster counts and `structure_attribution.tsv` holds the **union** (48,997),
+never the intersection. Re-run the command above to regenerate it.
 
 **Consequence, NOT implemented — needs a ruling.** A marker chosen on *pooled*
 frequency may be near-uninformative in one cluster. Stage 05 should either
@@ -123,6 +125,35 @@ The Stage 04 recommendation is to keep `het_raw` as the Siegel-faithful filter
 and carry `het_nomiss` as a **tiebreaker** when two loci are otherwise equal.
 `panel_select.py` already writes `het_nomiss` into every panel row so the
 tiebreaker is one line away. **Open decision before the panel is locked.**
+
+## Known rough edges in `panel_select.py` — fix at the first commissioned run
+
+The script has been smoke-tested at function level against the real heterozygome
+(`runs/2026-09-25_stage04-window-scan/smoke_test_panel_select.py` — both
+algorithms yield 100 markers, spacing respected, no all-NaN column), but it has
+never been run end to end through Snakemake. Four things were deliberately left
+alone rather than changed after review, because altering behaviour with no run to
+validate it would trade inspected code for uninspected code:
+
+1. **One real bug was found and fixed at review.** `pick_greedy` sorted on
+   `n_variants`, which `main()` renames to `n_snps` before selection — so every
+   greedy call, including the v1 deliverable, raised `KeyError`. `py_compile`,
+   `snakemake --lint` and `snakemake -n` all passed on it. Fixed; the smoke test
+   now covers it.
+2. **`best_per_locus` uses `groupby(...).first()`**, which takes the first
+   *non-null* value per column rather than the first row. Harmless today (the
+   heterozygome has no NaNs, confirmed), but it would silently splice two rows
+   together if Stage 04 ever emitted one. `.drop_duplicates("locus_id")` is the
+   safer idiom.
+3. **A shortfall exits 0.** If `min_spacing_bp` is binding, the script warns on
+   stdout and still writes a file named `panel_<algo>_<N>.tsv` containing fewer
+   than N markers, with no record of the shortfall inside the file. Prefer a
+   non-zero exit, or a `requested_size` column, so the evidence is on disk rather
+   than only in a log.
+4. **`merge_to_loci`'s docstring says "overlapping/bookending"**, but the
+   condition `if s > end` keeps exactly-touching windows separate. That is what
+   produces the reported 5,915; merging bookends would give 5,630. The number is
+   right, the wording is loose.
 
 ## Exit criterion (untested)
 
