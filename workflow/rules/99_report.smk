@@ -19,7 +19,11 @@ rule render_report:
         index    = "index.qmd",
         ch01     = "reports/qmd/01_data_prep.qmd",
         ch02     = "reports/qmd/02_sample_qc.qmd",
+        # ch02b was listed in _quarto.yml but missing from this rule's inputs, so
+        # a stale 02b chapter could not trigger a re-render. Added with Stage 04.
+        ch02b    = "reports/qmd/02b_declonalise.qmd",
         ch03     = "reports/qmd/03_snp_qc.qmd",
+        ch04     = "reports/qmd/04_window_scan.qmd",
         # ---- Stage 01 outputs the chapters read --------------------------
         bed              = "data/reference/pk_core_coding.bed",
         fws              = f"{SETUP_DIR}/fws_from_popgen.tsv",
@@ -35,6 +39,14 @@ rule render_report:
         snps_summary     = f"{QC_DIR}/snps.summary.tsv",
         maf_plot         = f"{FIG_DIR}/snp_qc_maf_density.png",
         miss_plot        = f"{FIG_DIR}/snp_qc_missingness_density.png",
+        # ---- Stage 04 outputs the chapter reads -------------------------
+        scan_windows     = f"{SCAN_OUT}/windows_all.tsv.gz",
+        scan_het         = f"{SCAN_OUT}/heterozygome.tsv",
+        scan_summary     = f"{SCAN_OUT}/window_scan_summary.tsv",
+        scan_genes       = f"{SCAN_OUT}/candidate_genes_top20.tsv",
+        scan_win_genes   = f"{SCAN_OUT}/candidate_window_genes.tsv",
+        scan_figs        = expand(f"{SCAN_FIG_DIR}/{{fig}}.png",
+                                  fig=WINDOW_SCAN_FIGURES),
     output:
         # Quarto book entry point. Treated as the canonical render-fresh marker.
         html = "reports/_book/index.html",
