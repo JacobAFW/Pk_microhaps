@@ -27,6 +27,7 @@ book:
       chapters:
         - reports/qmd/01_data_prep.qmd
         - reports/qmd/02_sample_qc.qmd
+        - reports/qmd/02b_declonalise.qmd
         - reports/qmd/03_snp_qc.qmd
 
 format:

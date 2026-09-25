@@ -15,7 +15,7 @@
 #
 # Inputs:
 #   data/vcf/merged_popgen.vcf.gz                     (Stage 01)
-#   outputs/qc/discovery_samples.txt                  (Stage 02)
+#   outputs/qc/discovery_samples.declonal.txt         (Stage 02b)
 #   data/reference/pk_core_coding.bed                 (Stage 01)
 #
 # Outputs:
@@ -29,7 +29,10 @@
 #
 # Single bcftools pipeline. Order matters:
 #   1. subset to discovery samples (so MAF is computed on the cohort that
-#      will actually drive panel selection)
+#      will actually drive panel selection). Since Stage 02b, that list is the
+#      post-dedupe (and optionally declonalised) cohort — MAF and F_MISSING
+#      recompute automatically from the dependency edge, so flipping
+#      clonality.declonalize re-derives the SNP set with no orchestration.
 #   2. PASS + biallelic SNPs
 #   3. restrict to pk_core_coding.bed
 #   4. fill F_MISSING and AF tags on the current sample set
@@ -40,7 +43,7 @@ rule build_discovery_snp_vcf:
         vcf       = VCF,
         vcf_index = VCF_INDEX,
         bed       = "data/reference/pk_core_coding.bed",
-        samples   = f"{QC_DIR}/discovery_samples.txt",
+        samples   = f"{QC_DIR}/discovery_samples.declonal.txt",
     output:
         vcf   = f"{QC_DIR}/snps.discovery.vcf.gz",
         index = f"{QC_DIR}/snps.discovery.vcf.gz.csi",

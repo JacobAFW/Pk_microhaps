@@ -7,6 +7,7 @@
 # Stages (mapping to Siegel et al 2024 Nat Commun):
 #   01_data_prep  — stage inputs + build Pk core+coding BED (all)
 #   02_sample_qc  — monoclonal filter (NB1 phase 1)
+#   02b_declonalise — replicate removal + IBD + clonal thinning (Siegel crit. 3)
 #   03_snp_qc     — biallelic + MAF + miss + core-coding (NB1 phase 2)
 #   04_window_scan — sliding 200bp scan → Pk heterozygome (NB1 phase 3) [TODO]
 #   05_panel_select — greedy + evenly-spaced selection (NB2)            [TODO]
@@ -40,6 +41,7 @@ LOGS_DIR   = config["outputs"]["logs_dir"]
 # ---------------------------------------------------------------------------
 include: "rules/01_data_prep.smk"
 include: "rules/02_sample_qc.smk"
+include: "rules/02b_declonalise.smk"
 include: "rules/03_snp_qc.smk"
 # include: "rules/04_window_scan.smk"
 # include: "rules/05_panel_select.smk"
@@ -60,6 +62,13 @@ FINAL_TARGETS = [
     f"{QC_DIR}/discovery_samples.txt",
     f"{FIG_DIR}/fws_distribution.png",
     f"{FIG_DIR}/callable_fraction_distribution.png",
+    # Stage 02b — duplicates, IBD, clonal thinning
+    f"{QC_DIR}/duplicates.remove",
+    f"{QC_DIR}/discovery_samples.dedup.txt",
+    f"{QC_DIR}/clonal_clusters.tsv",
+    f"{QC_DIR}/discovery_samples.declonal.txt",
+    f"{QC_DIR}/declonalisation_report.tsv",
+    f"{FIG_DIR}/ibd_fract_distribution_{IBD_TAG}.png",
     # Stage 03
     f"{QC_DIR}/snps.discovery.vcf.gz",
     f"{QC_DIR}/snps.summary.tsv",

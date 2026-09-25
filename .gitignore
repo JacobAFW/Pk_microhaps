@@ -133,3 +133,13 @@ reports/qmd/
 
 # Stray file
 %
+
+/.quarto/
+**/*.quarto_ipynb
+.claude/settings.local.json
+
+# Project state and run scaffolding — local only
+DECISIONS.md
+MISSION.md
+AUTONOMY_PROTOCOL.md
+runs/

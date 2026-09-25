@@ -34,6 +34,41 @@ sample_qc:
   callable_threshold: 0.50       # ≥50% core genome callable
 
 # ---------------------------------------------------------------------------
+# Stage 02b — duplicates, IBD, clonal thinning
+#
+# Key names are deliberately identical to the `agnostic` pop-gen pipeline's
+# `clonality:` / `ibd:` blocks — same idiom in both repos beats a locally
+# neater design. Keys below the first group are Microhaplotype-specific.
+# ---------------------------------------------------------------------------
+clonality:
+  declonalize: false             # L3; true = thin to one representative per clonal group
+  clonal_ibd_threshold: 0.95     # Siegel's clone threshold; matches agnostic's ibd.clonal_ibd_threshold
+  min_cluster_n: 5               # skip hmmIBD below this
+  duplicate_id_pattern: "_DK.*"  # Illumina lane suffix on the Indo VCF
+  ibd_min_maf: 0.01              # L1
+  ibd_max_variant_missing: 0.20  # L1 — the relaxed knob. Run A = 0.10, Run B = 0.20.
+  ibd_ld_prune: false            # L1 — MUST stay false. hmmIBD models IBD along the
+                                 # chromosome and needs linkage structure. LD-pruning
+                                 # is an ADMIXTURE requirement, not an IBD one.
+
+  # --- Microhaplotype-specific -------------------------------------------
+  ibd_min_variants: 20000        # rule ibd_variant_set asserts at least this many
+  cluster_table: data/metadata/admix_clusters.tsv   # L2, vendored from agnostic
+  residual_cluster_name: "RESIDUAL"
+  # L2: samples with no imported cluster label form a residual group. It is
+  # REPORTED but never clonal-called — a residual group is not a genetically
+  # homogeneous population, so hmmIBD on it would manufacture the very
+  # population-structure artefact L2 exists to prevent.
+  residual_clonal_calls: false
+  focal_cluster: "Peninsular"    # extra pair-file; the Aceh result under most scrutiny
+  # Non-nuclear contigs. Excluded from IBD: organellar genomes are uniparentally
+  # inherited and break hmmIBD's along-chromosome segment model.
+  exclude_contigs: ["PKNH_MIT_v2", "new_API_strain_A1_H.1"]
+  # .fai whose contig names match the VCF (ordered_PKNH_*_v2). NOT the
+  # PlasmoDB-67 .fai, which carries LT* accessions instead.
+  contig_fai: data/reference/strain_preDB_version/strain_A1_H.1.Icor.fasta.fai
+
+# ---------------------------------------------------------------------------
 # Stage 03 — SNP QC (Siegel notebook 1, phase 2)
 # ---------------------------------------------------------------------------
 snp_qc:
