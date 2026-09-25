@@ -129,11 +129,19 @@ tiebreaker is one line away. **Open decision before the panel is locked.**
 ## Known rough edges in `panel_select.py` — fix at the first commissioned run
 
 The script has been smoke-tested at function level against the real heterozygome
-(`runs/2026-09-25_stage04-window-scan/smoke_test_panel_select.py` — both
-algorithms yield 100 markers, spacing respected, no all-NaN column), but it has
-never been run end to end through Snakemake. Four things were deliberately left
-alone rather than changed after review, because altering behaviour with no run to
-validate it would trade inspected code for uninspected code:
+— both algorithms yield 100 markers, spacing respected, no all-NaN column — and
+the closing review additionally ran all ten algorithm × size combinations end to
+end (10/10 exact marker counts, zero shortfall, minimum realised gap 10,100 bp).
+It has never been run through Snakemake into `outputs/panel/`.
+
+⚠ The smoke test is `runs/2026-09-25_stage04-window-scan/smoke_test_panel_select.py`,
+which is **gitignored** — a fresh clone will not have it. Moving it to a tracked
+path is an open item; see `RUN_SUMMARY.md` NEEDS-JACOB ⑫.
+
+One real bug was found and fixed at review (item 1 below). **Three** further
+things were deliberately left alone rather than changed, because altering
+behaviour with no run to validate it would trade inspected code for uninspected
+code:
 
 1. **One real bug was found and fixed at review.** `pick_greedy` sorted on
    `n_variants`, which `main()` renames to `n_snps` before selection — so every
