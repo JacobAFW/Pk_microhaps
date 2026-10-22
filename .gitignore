@@ -143,3 +143,4 @@ DECISIONS.md
 MISSION.md
 AUTONOMY_PROTOCOL.md
 runs/
+runs/*/.scratch/

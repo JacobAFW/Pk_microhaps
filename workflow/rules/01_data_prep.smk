@@ -100,3 +100,63 @@ rule import_popgen_fws:
         mkdir -p $(dirname {output.fws}) $(dirname {log})
         bash scripts/sh/import_popgen_fws.sh {output.fws} > {log} 2>&1
         """
+
+# ---------------------------------------------------------------------------
+# rule audit_core_coding_bed
+#
+# Is `pk_core_coding.bed` actually excluding Pk's hypervariable multigene
+# families? Pv4 ships a curated core-genome annotation; Pk has none, so the BED
+# is built as CDS minus Pop-gen's mapping-quality mask — a mask designed for
+# variant calling, not as a hypervariable-region annotation. This rule provides
+# the orthogonal check: locate annotated SICAvar / kir / pseudogene loci in the
+# lifted GFF and report how much of them survives into the BED and into the
+# discovery SNP set.
+#
+# EXIT CRITERION: the script exits 2 if flagged families hold more than
+# `max_flagged_snp_frac` of discovery SNPs. Non-zero fails the rule, which fails
+# the workflow, which is the point — panel windows drawn from hypervariable
+# families look diverse and do not amplify reliably.
+#
+# WHY THIS RULE IS IN STAGE 01 BUT READS A STAGE 03 OUTPUT. The audit is a
+# property of the BED, which Stage 01 builds, and `DECISIONS.md` has claimed
+# since 2026-08-17 that it is enforced by a Stage 01 rule. But the ">1% of
+# discovery SNPs" criterion needs the discovery VCF, which Stage 03 produces.
+# Snakemake resolves by DAG rather than by file order, so declaring the VCF as
+# an input places the rule after Stage 03 without any circularity: nothing in
+# Stages 01-03 depends on this rule's output. The rule therefore lives where
+# MISSION and DECISIONS.md say it lives and still tests what matters.
+#
+# `audit_core_coding_bed.py --out-bed` can also emit a BED with flagged
+# intervals removed. It is deliberately NOT wired: nothing consumes a cleaned
+# BED, and switching Stages 03/04 onto one would change the core-genome
+# definition, which is a threshold decision and out of scope here.
+# ---------------------------------------------------------------------------
+rule audit_core_coding_bed:
+    input:
+        gff = REF_GFF_LIFTED,
+        bed = "data/reference/pk_core_coding.bed",
+        vcf = f"{QC_DIR}/snps.discovery.vcf.gz",
+    output:
+        report = f"{SETUP_DIR}/core_coding_audit.tsv",
+    params:
+        # 1% of discovery SNPs. Hardcoded rather than read from config.yaml
+        # because this run's mission does not permit editing config.yaml; the
+        # value belongs under `snp_qc.max_flagged_snp_frac` and moving it there
+        # is a one-line follow-up.
+        max_flagged_snp_frac = 0.01,
+    log:
+        f"{LOGS_DIR}/01_data_prep/audit_core_coding_bed.log",
+    message:
+        "01_data_prep: auditing pk_core_coding.bed against SICAvar/kir/pseudogenes"
+    shell:
+        r"""
+        set -euo pipefail
+        mkdir -p $(dirname {output.report}) $(dirname {log})
+        python scripts/py/audit_core_coding_bed.py \
+            --gff {input.gff} \
+            --bed {input.bed} \
+            --vcf {input.vcf} \
+            --out-report {output.report} \
+            --max-flagged-snp-frac {params.max_flagged_snp_frac} \
+            2>&1 | tee {log}
+        """

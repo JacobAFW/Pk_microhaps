@@ -58,6 +58,10 @@ FINAL_TARGETS = [
     f"{SETUP_DIR}/inputs_check.ok",
     "data/reference/pk_core_coding.bed",
     f"{SETUP_DIR}/fws_from_popgen.tsv",
+    # Stage 01 — core-BED hypervariable-family audit. Declared here so a bare
+    # `snakemake` enforces it. It reads Stage 03's discovery VCF, so the DAG
+    # places it after Stage 03; nothing in Stages 01-03 depends on it.
+    f"{SETUP_DIR}/core_coding_audit.tsv",
     # Stage 02
     "data/metadata/samples.tsv",
     f"{QC_DIR}/sample_metadata.tsv",
