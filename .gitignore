@@ -144,3 +144,12 @@ MISSION.md
 AUTONOMY_PROTOCOL.md
 runs/
 runs/*/.scratch/
+
+# Local-only project state — glob, not exact filename
+MISSION.md*
+PLAN.md*
+AUTONOMY_PROTOCOL.md*
+DECISIONS.md*
+STATUS.md*
+*.bak
+*.bak.*
